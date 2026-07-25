@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server";
-import { sql, ensureTable } from "@/lib/db";
+import { listLinks, addLink } from "@/lib/db";
 
 export async function GET() {
-  await ensureTable();
-  const rows = await sql`SELECT id, title, url, created_at FROM links ORDER BY created_at DESC`;
-  return NextResponse.json(rows);
+  const links = await listLinks();
+  return NextResponse.json(links);
 }
 
 export async function POST(request) {
-  await ensureTable();
   const body = await request.json();
   const title = (body.title || "").trim();
   let url = (body.url || "").trim();
@@ -27,9 +25,6 @@ export async function POST(request) {
     return NextResponse.json({ error: "Link tidak sah" }, { status: 400 });
   }
 
-  const rows = await sql`
-    INSERT INTO links (title, url) VALUES (${title}, ${url})
-    RETURNING id, title, url, created_at
-  `;
-  return NextResponse.json(rows[0], { status: 201 });
+  const link = await addLink(title, url);
+  return NextResponse.json(link, { status: 201 });
 }
