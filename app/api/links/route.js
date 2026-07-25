@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { listLinks, addLink } from "@/lib/db";
+import { verifySessionToken, SESSION_COOKIE } from "@/lib/auth";
 
 export async function GET() {
   const links = await listLinks();
@@ -7,6 +8,11 @@ export async function GET() {
 }
 
 export async function POST(request) {
+  const token = request.cookies.get(SESSION_COOKIE)?.value;
+  if (!verifySessionToken(token)) {
+    return NextResponse.json({ error: "Tidak dibenarkan" }, { status: 401 });
+  }
+
   const body = await request.json();
   const title = (body.title || "").trim();
   let url = (body.url || "").trim();
